@@ -1,0 +1,49 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NlToSqlEngine", "src\NlToSqlEngine\NlToSqlEngine.csproj", "{A1B2C3D4-E5F6-7890-ABCD-123456789012}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NlToSqlEngine.ConsoleApp", "samples\NlToSqlEngine.ConsoleApp\NlToSqlEngine.ConsoleApp.csproj", "{06B86E9E-F126-4B4F-AD33-BBCE24F10AFC}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{4D54F71D-D81D-4D86-B28B-EFB006432673}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "samples", "samples", "{F919DF79-1B82-4891-9AAC-53FAD8A29C38}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{85ACCDDD-FD8A-4F73-91B1-AA0FF864E31F}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{5ED63784-173D-47E2-9F08-512D2EE9E5AB}"
+	ProjectSection(SolutionItems) = preProject
+		.gitignore = .gitignore
+		LICENSE = LICENSE
+		README.md = README.md
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NlToSqlEngine.BlazorApp", "samples\NlToSqlEngine.BlazorApp\NlToSqlEngine.BlazorApp.csproj", "{88D65898-D0DF-D185-38A1-EE053F012840}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A1B2C3D4-E5F6-7890-ABCD-123456789012}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1B2C3D4-E5F6-7890-ABCD-123456789012}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1B2C3D4-E5F6-7890-ABCD-123456789012}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1B2C3D4-E5F6-7890-ABCD-123456789012}.Release|Any CPU.Build.0 = Release|Any CPU
+		{06B86E9E-F126-4B4F-AD33-BBCE24F10AFC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{06B86E9E-F126-4B4F-AD33-BBCE24F10AFC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{06B86E9E-F126-4B4F-AD33-BBCE24F10AFC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{06B86E9E-F126-4B4F-AD33-BBCE24F10AFC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{88D65898-D0DF-D185-38A1-EE053F012840}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{88D65898-D0DF-D185-38A1-EE053F012840}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{88D65898-D0DF-D185-38A1-EE053F012840}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{88D65898-D0DF-D185-38A1-EE053F012840}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {12345678-9ABC-DEF0-1234-56789ABCDEF0}
+	EndGlobalSection
+EndGlobal

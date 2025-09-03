@@ -1,0 +1,448 @@
+@page "/"
+@using NlToSqlEngine.Core
+@using NlToSqlEngine.Models
+@using Microsoft.AspNetCore.Components.Web
+@inject INlToSqlEngine Engine
+@inject ILogger<Index> Logger
+
+<PageTitle>NL to SQL Engine - Query Analyzer</PageTitle>
+
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="display-4 mb-3">
+                <i class="fas fa-magic text-primary me-3"></i>
+                Natural Language to SQL Engine
+            </h1>
+            <p class="lead text-muted">
+                Ask questions about your database in plain English. This engine replicates Claude's methodology for intelligent database analysis.
+            </p>
+        </div>
+    </div>
+
+    <!-- Query Input Section -->
+    <div class="row mb-4">
+        <div class="col">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-question-circle me-2"></i>
+                        Ask Your Question
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="mb-3">
+                                <label for="queryInput" class="form-label fw-bold">Natural Language Query</label>
+                                <textarea @bind="currentQuery" @onkeydown="HandleKeyDown"
+                                          class="form-control form-control-lg"
+                                          id="queryInput"
+                                          rows="3"
+                                          placeholder="e.g., Top 20 users by usage, Which departments have the most activity?, Show me inactive users..."
+                                          disabled="@isProcessing"></textarea>
+                            </div>
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-start">
+                                <button class="btn btn-primary btn-lg me-md-2"
+                                        @onclick="ProcessQuery"
+                                        disabled="@(isProcessing || string.IsNullOrWhiteSpace(currentQuery))">
+                                    @if (isProcessing)
+                                    {
+                                        <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                                        <span>Analyzing...</span>
+                                    }
+                                    else
+                                    {
+                                        <i class="fas fa-search me-2"></i>
+                                        <span>Analyze Query</span>
+                                    }
+                                </button>
+                                <button class="btn btn-outline-secondary" @onclick="ClearResults" disabled="@isProcessing">
+                                    <i class="fas fa-eraser me-2"></i>Clear
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-light">
+                                <div class="card-header">
+                                    <small class="fw-bold text-muted">Quick Examples</small>
+                                </div>
+                                <div class="card-body py-2">
+                                    @foreach (var example in exampleQueries)
+                                    {
+                                        <button class="btn btn-link btn-sm p-1 text-start d-block"
+                                                @onclick="() => UseExample(example)"
+                                                disabled="@isProcessing">
+                                            <small>@example</small>
+                                        </button>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Processing Status -->
+    @if (isProcessing)
+    {
+        <div class="row mb-4">
+            <div class="col">
+                <div class="card border-info">
+                    <div class="card-body text-center">
+                        <div class="spinner-border text-primary me-3" role="status"></div>
+                        <span class="h5 text-info">@processingStatus</span>
+                        <br />
+                        <small class="text-muted">Following Claude's step-by-step methodology...</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Results Section -->
+    @if (queryResult != null && !isProcessing)
+    {
+        <!-- Final Answer -->
+        <div class="row mb-4">
+            <div class="col">
+                <div class="card shadow border-success">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-lightbulb me-2"></i>
+                            Final Answer
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-success border-0" style="white-space: pre-line;">
+                            @queryResult.FinalAnswer
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Execution Steps -->
+        @if (queryResult.ExecutionSteps?.Any() == true)
+        {
+            <div class="row mb-4">
+                <div class="col">
+                    <div class="card shadow">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-list-ol me-2"></i>
+                                Execution Steps
+                                <small class="text-muted">(@queryResult.ExecutionSteps.Count steps in @queryResult.Metadata.TotalExecutionTime.TotalMilliseconds.ToString("F0")ms)</small>
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="accordion" id="stepsAccordion">
+                                @for (int i = 0; i < queryResult.ExecutionSteps.Count; i++)
+                                {
+                                    var step = queryResult.ExecutionSteps[i];
+                                    var stepId = $"step{i}";
+                                    <div class="accordion-item">
+                                        <h2 class="accordion-header" id="@($"heading{i}")">
+                                            <button class="accordion-button @(i == 0 ? "" : "collapsed")" type="button"
+                                                    data-bs-toggle="collapse" data-bs-target="#@stepId">
+                                                <div class="d-flex align-items-center">
+                                                    <span class="badge bg-primary me-3">@step.StepNumber</span>
+                                                    <div>
+                                                        <div class="fw-bold">@step.Description</div>
+                                                        <small class="text-muted">@step.StepType • @step.ExecutionTime.TotalMilliseconds.ToString("F0")ms • @(step.Results?.Count ?? 0) records</small>
+                                                    </div>
+                                                </div>
+                                            </button>
+                                        </h2>
+                                        <div id="@stepId" class="accordion-collapse collapse @(i == 0 ? "show" : "")"
+                                             data-bs-parent="#stepsAccordion">
+                                            <div class="accordion-body">
+                                                <div class="row">
+                                                    <div class="col-md-6">
+                                                        <h6 class="text-primary">Purpose</h6>
+                                                        <p class="text-muted">@step.Purpose</p>
+
+                                                        <h6 class="text-primary">Reasoning</h6>
+                                                        <p class="text-muted">@step.Reasoning</p>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        @if (!string.IsNullOrEmpty(step.SqlQuery) && !step.SqlQuery.StartsWith("--"))
+                                                        {
+                                                            <h6 class="text-primary">SQL Query</h6>
+                                                            <pre class="bg-light p-2 rounded"><code>@step.SqlQuery</code></pre>
+                                                        }
+
+                                                        @if (step.Results?.Any() == true)
+                                                        {
+                                                            <h6 class="text-primary">Sample Results (@step.Results.Count records)</h6>
+                                                            <div class="table-responsive">
+                                                                <table class="table table-sm table-striped">
+                                                                    <thead>
+                                                                        <tr>
+                                                                            @foreach (var key in step.Results.First().Keys.Take(4))
+                                                                            {
+                                                                                <th>@key</th>
+                                                                            }
+                                                                        </tr>
+                                                                    </thead>
+                                                                    <tbody>
+                                                                        @foreach (var record in step.Results.Take(3))
+                                                                        {
+                                                                            <tr>
+                                                                                @foreach (var kvp in record.Take(4))
+                                                                                {
+                                                                                    <td><small>@kvp.Value</small></td>
+                                                                                }
+                                                                            </tr>
+                                                                        }
+                                                                    </tbody>
+                                                                </table>
+                                                            </div>
+                                                        }
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+
+        <!-- Key Metrics and Data -->
+        <div class="row">
+            <!-- Key Metrics -->
+            @if (queryResult.Insights?.KeyMetrics?.Any() == true)
+            {
+                <div class="col-md-6 mb-4">
+                    <div class="card shadow">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-chart-bar me-2"></i>
+                                Key Metrics
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            @foreach (var metric in queryResult.Insights.KeyMetrics.Take(8))
+                            {
+                                <div class="d-flex justify-content-between align-items-center border-bottom py-2">
+                                    <div>
+                                        <strong>@metric.Name</strong>
+                                        @if (!string.IsNullOrEmpty(metric.Description))
+                                        {
+                                            <br />
+                            
+                                            <small class="text-muted">@metric.Description</small>
+                                        }
+                                    </div>
+                                    <span class="badge bg-primary">@metric.Value</span>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+
+            <!-- Data Results -->
+            @if (queryResult.Data?.Any() == true)
+            {
+                <div class="col-md-6 mb-4">
+                    <div class="card shadow">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-table me-2"></i>
+                                Data Results
+                                <small class="text-muted">(@queryResult.Data.Count records)</small>
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive" style="max-height: 400px;">
+                                <table class="table table-striped table-hover">
+                                    <thead class="table-dark sticky-top">
+                                        <tr>
+                                            @foreach (var key in queryResult.Data.First().Keys.Take(6))
+                                            {
+                                                <th><small>@key</small></th>
+                                            }
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var record in queryResult.Data.Take(20))
+                                        {
+                                            <tr>
+                                                @foreach (var kvp in record.Take(6))
+                                                {
+                                                    <td><small>@kvp.Value</small></td>
+                                                }
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                            @if (queryResult.Data.Count > 20)
+                            {
+                                <small class="text-muted">Showing first 20 of @queryResult.Data.Count records</small>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- Business Insights -->
+        @if (queryResult.Insights != null && (queryResult.Insights.Patterns?.Any() == true || queryResult.Insights.Recommendations?.Any() == true))
+        {
+            <div class="row">
+                @if (queryResult.Insights.Patterns?.Any() == true)
+                {
+                    <div class="col-md-6 mb-4">
+                        <div class="card shadow border-info">
+                            <div class="card-header bg-info text-white">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-search me-2"></i>
+                                    Patterns Identified
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                @foreach (var pattern in queryResult.Insights.Patterns.Take(5))
+                                {
+                                    <div class="alert alert-info border-0 py-2">
+                                        <i class="fas fa-lightbulb me-2"></i>@pattern
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                }
+
+                @if (queryResult.Insights.Recommendations?.Any() == true)
+                {
+                    <div class="col-md-6 mb-4">
+                        <div class="card shadow border-warning">
+                            <div class="card-header bg-warning text-dark">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-bullhorn me-2"></i>
+                                    Recommendations
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                @foreach (var recommendation in queryResult.Insights.Recommendations.Take(5))
+                                {
+                                    <div class="alert alert-warning border-0 py-2">
+                                        <i class="fas fa-arrow-right me-2"></i>@recommendation
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    }
+
+    <!-- Error Display -->
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="row mb-4">
+            <div class="col">
+                <div class="alert alert-danger alert-dismissible fade show">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Error:</strong> @errorMessage
+                    <button type="button" class="btn-close" @onclick="ClearError"></button>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private string currentQuery = "";
+    private SqlQueryResult? queryResult;
+    private bool isProcessing = false;
+    private string processingStatus = "";
+    private string errorMessage = "";
+
+    private readonly string[] exampleQueries = {
+        "Top 20 consumer by usage",
+        "Show me users with the highest activity",
+        "Which departments have the most active users?",
+    };
+
+    private async Task ProcessQuery()
+    {
+        if (string.IsNullOrWhiteSpace(currentQuery) || isProcessing)
+            return;
+
+        isProcessing = true;
+        processingStatus = "Analyzing query with LLM...";
+        queryResult = null;
+        errorMessage = "";
+
+        try
+        {
+            Logger.LogInformation("Processing query: {Query}", currentQuery);
+
+            processingStatus = "Discovering database schema...";
+            StateHasChanged();
+            await Task.Delay(100); // Allow UI to update
+
+            processingStatus = "Planning execution strategy...";
+            StateHasChanged();
+            await Task.Delay(100);
+
+            processingStatus = "Executing queries progressively...";
+            StateHasChanged();
+            await Task.Delay(100);
+
+            processingStatus = "Generating business insights...";
+            StateHasChanged();
+
+            queryResult = await Engine.ProcessNaturalLanguageQueryAsync(currentQuery);
+
+            if (!queryResult.Success)
+            {
+                errorMessage = queryResult.ErrorMessage ?? "An unknown error occurred";
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error processing query: {Query}", currentQuery);
+            errorMessage = $"Failed to process query: {ex.Message}";
+        }
+        finally
+        {
+            isProcessing = false;
+            processingStatus = "";
+        }
+    }
+
+    private void UseExample(string example)
+    {
+        currentQuery = example;
+    }
+
+    private void ClearResults()
+    {
+        currentQuery = "";
+        queryResult = null;
+        errorMessage = "";
+    }
+
+    private void ClearError()
+    {
+        errorMessage = "";
+    }
+
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && e.CtrlKey)
+        {
+            await ProcessQuery();
+        }
+    }
+}

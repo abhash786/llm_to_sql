@@ -1,0 +1,37 @@
+@page "/settings"
+
+<PageTitle>Settings</PageTitle>
+
+<h1><i class="fas fa-cog me-3"></i>Settings</h1>
+<p class="lead text-muted">Configure your NL to SQL Engine</p>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-brain me-2"></i>LLM Configuration</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-success">
+                    <strong>Current Provider:</strong> Anthropic Claude<br/>
+                    <strong>Model:</strong> claude-3-5-sonnet-20241022<br/>
+                    <small class="text-muted">Configure via appsettings.json or user secrets</small>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-database me-2"></i>Database Configuration</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <strong>Connection:</strong> SQL Server<br/>
+                    <strong>Status:</strong> Connected<br/>
+                    <small class="text-muted">Database connection is configured via connection string</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

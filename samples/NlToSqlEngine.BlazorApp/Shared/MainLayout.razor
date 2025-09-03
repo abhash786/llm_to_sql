@@ -1,0 +1,21 @@
+@inherits LayoutComponentBase
+
+<div class="page">
+    <div class="sidebar">
+        <NavMenu />
+    </div>
+
+    <main>
+        <div class="top-row px-4 auth">
+            <div class="d-flex align-items-center">
+                <i class="fas fa-robot text-primary me-2"></i>
+                <span class="fw-bold">NL to SQL Engine</span>
+                <small class="ms-2 text-muted">Powered by Claude's Methodology</small>
+            </div>
+        </div>
+
+        <article class="content px-4">
+            @Body
+        </article>
+    </main>
+</div>

@@ -1,0 +1,7 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/samples/NlToSqlEngine.BlazorApp/obj
+/samples/NlToSqlEngine.ConsoleApp/obj
+/src/NlToSqlEngine/obj
